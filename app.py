@@ -3,7 +3,6 @@ from app_functions import CurrencyRateError, convert, get_api_key, get_rates
 
 st.title("Convertisseur de devises")
 
-
 @st.cache_data(ttl=3600)
 def load_rates(api_key):
     return get_rates(api_key=api_key)
@@ -26,14 +25,50 @@ except CurrencyRateError as error:
     st.stop()
 
 
-amount = st.number_input("Montant :", min_value=0.0, format="%.2f")
 currencies = sorted(rates.keys())
-from_currency = st.selectbox("De :", currencies)
-to_currency = st.selectbox("Vers :", currencies)
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "from_currency" not in st.session_state:
+    st.session_state.from_currency = currencies[0]
+if "to_currency" not in st.session_state:
+    st.session_state.to_currency = currencies[1] if len(currencies) > 1 else currencies[0]
+
+def swap_currencies():
+    st.session_state.from_currency, st.session_state.to_currency = (
+        st.session_state.to_currency,
+        st.session_state.from_currency,
+    )
+
+amount = st.number_input("Montant :", min_value=0.0, format="%.2f")
+
+col1, col2, col3 = st.columns([3, 1, 3])
+
+with col1:
+    from_currency = st.selectbox(
+        "De :",
+        currencies,
+        index=currencies.index(st.session_state.from_currency),
+        key="from_currency",
+    )
+
+with col2:
+    st.write("")
+    st.write("")
+    st.button("⇄", on_click=swap_currencies)
+
+with col3:
+    to_currency = st.selectbox(
+        "Vers :",
+        currencies,
+        index=currencies.index(st.session_state.to_currency),
+        key="to_currency",
+    )
 
 if st.button("Convertir"):
     if amount <= 0:
-        st.error("Erreur : Le montant doit être strictement positif (supérieur à 0).")
+        st.error("elif from_currency == to_currency:Erreur : Le montant doit être strictement positif (supérieur à 0).")
     elif from_currency == to_currency:
         st.error("Erreur : La devise source et la devise cible doivent être différentes.")
     else:
@@ -42,3 +77,8 @@ if st.button("Convertir"):
             st.success(f"{amount} {from_currency} = {result:.2f} {to_currency}")
         except CurrencyRateError as error:
             st.error(str(error))
+
+if st.session_state.history:
+    st.subheader("Historique")
+    for entry in reversed(st.session_state.history):
+        st.write(entry)
