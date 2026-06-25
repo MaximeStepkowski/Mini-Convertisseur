@@ -1,9 +1,31 @@
 import streamlit as st
-from app_functions import RATES, convert
+from app_functions import CurrencyRateError, convert, get_api_key, get_rates
 
 st.title("Convertisseur de devises")
 
-currencies = list(RATES.keys())
+@st.cache_data(ttl=3600)
+def load_rates(api_key):
+    return get_rates(api_key=api_key)
+
+
+try:
+    api_key = get_api_key()
+    if not api_key:
+        raise CurrencyRateError(
+            "Clé API manquante : définis la variable EXCHANGE_RATE_API_KEY."
+        )
+
+    rates = load_rates(api_key)
+except CurrencyRateError as error:
+    st.error(str(error))
+    st.info(
+        "Crée une clé sur exchangerate-api.com puis définis la variable "
+        "d'environnement EXCHANGE_RATE_API_KEY."
+    )
+    st.stop()
+
+
+currencies = sorted(rates.keys())
 
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -45,14 +67,13 @@ with col3:
     )
 
 if st.button("Convertir"):
-    try:
-        result = convert(amount, from_currency, to_currency)
-        st.success(f"{amount} {from_currency} = {result:.2f} {to_currency}")
-        st.session_state.history.append(
-            f"{amount} {from_currency} = {result:.2f} {to_currency}"
-        )
-    except ValueError as e:
-        st.error(f"Erreur : {e}")
+        try:
+            result = convert(amount, from_currency, to_currency, rates)
+            st.success(f"{amount} {from_currency} = {result:.2f} {to_currency}")
+        except CurrencyRateError as error:
+            st.error(str(error))
+        except ValueError as e:
+            st.error(f"Erreur : {e}")
 
 if st.session_state.history:
     st.subheader("Historique")
