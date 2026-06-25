@@ -5,6 +5,9 @@ st.title("Convertisseur de devises")
 
 currencies = list(RATES.keys())
 
+if "history" not in st.session_state:
+    st.session_state.history = []
+
 if "from_currency" not in st.session_state:
     st.session_state.from_currency = currencies[0]
 if "to_currency" not in st.session_state:
@@ -49,3 +52,11 @@ if st.button("Convertir"):
     else:
         result = convert(amount, from_currency, to_currency)
         st.success(f"{amount} {from_currency} = {result:.2f} {to_currency}")
+        st.session_state.history.append(
+            f"{amount} {from_currency} = {result:.2f} {to_currency}"
+        )
+
+if st.session_state.history:
+    st.subheader("Historique")
+    for entry in reversed(st.session_state.history):
+        st.write(entry)
