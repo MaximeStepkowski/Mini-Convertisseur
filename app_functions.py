@@ -66,5 +66,8 @@ def convert(
 ) -> float:
     if from_currency not in rates or to_currency not in rates:
         raise CurrencyRateError("Devise introuvable dans les taux de change.")
-
+    if amount <= 0:
+        raise ValueError("Le montant doit être strictement positif (supérieur à 0).")
+    if from_currency == to_currency:
+        raise ValueError("La devise source et la devise cible doivent être différentes.")
     return amount * rates[to_currency] / rates[from_currency]
