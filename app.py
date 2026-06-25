@@ -70,6 +70,7 @@ if st.button("Convertir"):
         try:
             result = convert(amount, from_currency, to_currency, rates)
             st.success(f"{amount} {from_currency} = {result:.2f} {to_currency}")
+            st.session_state.history.append(f"{amount} {from_currency} = {result:.2f} {to_currency}")
         except CurrencyRateError as error:
             st.error(str(error))
         except ValueError as e:
